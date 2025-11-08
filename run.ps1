@@ -1,4 +1,6 @@
 
+#=====================================================
+
 # Check and run the script as admin if required
 $myWindowsID = [System.Security.Principal.WindowsIdentity]::GetCurrent()
 $myWindowsPrincipal = new-object System.Security.Principal.WindowsPrincipal($myWindowsID)
@@ -12,14 +14,14 @@ if (! $myWindowsPrincipal.IsInRole($adminRole)) {
     exit
 }
 
-#---------[ Execution ]---------#
+#=====================================================
 
 # Set the window title
 $Host.UI.RawUI.WindowTitle = "Mac11 USB Creator"
 
-
 Clear-Host
 
+#=====================================================
 
 Write-Host ''
 Write-Host 'Mac11 USB Creator'
@@ -39,11 +41,13 @@ $USB = Read-Host "Drive Letter"
 Write-Host ''
 Write-Host "The Contents of your Flash Drive will be DESTROYED!"
 $confirm = Read-Host "Are you sure you want to proceed? (Y/N)"
-if ($confirm.ToLower() -ne 'Y') {
+if ($confirm -ne 'Y') {
     exit
 }
 
 Write-Host ''
+
+#=====================================================
 
 #
 $USBdisk = (Get-Partition -DriveLetter $USB | Get-Disk)
@@ -53,7 +57,7 @@ $USBdisk | Clear-Disk `
     -RemoveData `
     -Confirm:$false
 
-Write-Output "Converting USB Drive to MBR ..."
+Write-Output "Converting to MBR ..."
 $USBdisk | Set-Disk `
     -PartitionStyle MBR
 
@@ -68,23 +72,17 @@ $partition | Format-Volume `
     -NewFileSystemLabel "Mac11" `
     | Out-Null
 
-Write-Output "Copying Windows Files ..."
-Copy-Item `
-    -Path "$($ISO):\*" `
-    -Destination "$($USB):\" `
-    -Recurse -Force -Verbose
-
 #=====================================================
 
-$zipFile = "$env:temp\BootCamp.zip"
-$extracted = "$env:temp\BootCamp-Mac11\"
+$zipFile = "$env:temp\Win10-BaseSetup.zip"
+$extracted = "$env:temp\Win10-BaseSetup\"
 
 # If the extracted folder does not already exist
 if (-not (Test-Path $extracted)) {
     
-    Write-Output "Downloading BootCamp Files ..."
+    Write-Output "Downloading Installer Files ..."
     Invoke-WebRequest `
-        -Uri "https://media.githubusercontent.com/media/MineFartS/Mac11/refs/heads/main/BootCamp.zip" `
+        -Uri "https://media.githubusercontent.com/media/MineFartS/Mac11/refs/heads/main/Win10-BaseSetup.zip" `
         -OutFile $zipFile
 
     #
@@ -94,7 +92,7 @@ if (-not (Test-Path $extracted)) {
         -ErrorAction SilentlyContinue `
         | Out-Null
 
-    Write-Output "Extracting BootCamp Files ..."
+    Write-Output "Extracting Installer Files ..."
     Expand-Archive `
         -Path $zipfile `
         -DestinationPath $extracted `
@@ -107,12 +105,22 @@ if (-not (Test-Path $extracted)) {
 
 }
 
-Write-Output "Copying BootCamp Files ..."
+Write-Output "Copying Installer Files ..."
 
+# Copy Windows 10 Installer Files
 Copy-Item `
     -Path $extracted'\*' `
     -Destination $USB':\' `
     -Recurse -Force -Verbose
 
+# Copy Windows 11 Image
+Copy-Item `
+    -Path $ISO':\sources\install.wim' `
+    -Destination $USB':\sources\install.wim' `
+    -Force -Verbose
+
+#=====================================================
+
+Write-Output ''
 Write-Output "Creation completed!"
 Read-Host "Press Enter to exit"
