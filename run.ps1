@@ -37,7 +37,7 @@ Write-Host 'Please enter the drive letter of your USB Flash Drive'
 $USB = Read-Host "Drive Letter"
 
 Write-Host ''
-Write-Host "The Contents of your flash drive will be DESTROYED!"
+Write-Host "The Contents of your Flash Drive will be DESTROYED!"
 $confirm = Read-Host "Are you sure you want to proceed? (Y/N)"
 if ($confirm.ToLower() -ne 'Y') {
     exit
@@ -69,29 +69,50 @@ $partition | Format-Volume `
     | Out-Null
 
 Write-Output "Copying Windows Files ..."
-#Copy-Item `
-#    -Path "$($ISO):\*" `
-#    -Destination "$($USB):\" `
-#    -Recurse -Force -Verbose
+Copy-Item `
+    -Path "$($ISO):\*" `
+    -Destination "$($USB):\" `
+    -Recurse -Force -Verbose
 
 #=====================================================
 
 $zipFile = "$env:temp\BootCamp.zip"
+$extracted = "$env:temp\BootCamp-Mac11\"
 
-# If zipFile does not already exists
-if (-not (Test-Path $zipFile)) {
+# If the extracted folder does not already exist
+if (-not (Test-Path $extracted)) {
     
     Write-Output "Downloading BootCamp Files ..."
     Invoke-WebRequest `
         -Uri "https://media.githubusercontent.com/media/MineFartS/Mac11/refs/heads/main/BootCamp.zip" `
         -OutFile $zipFile
 
+    #
+    New-Item `
+        -ItemType Directory `
+        -Path $extracted `
+        -ErrorAction SilentlyContinue `
+        | Out-Null
+
+    Write-Output "Extracting BootCamp Files ..."
+    Expand-Archive `
+        -Path $zipfile `
+        -DestinationPath $extracted `
+        -Force -Verbose
+
+    #
+    Remove-Item `
+        -Path $zipFile `
+        -Force
+
 }
 
 Write-Output "Copying BootCamp Files ..."
-Expand-Archive `
-    -Path $zipFile `
-    -DestinationPath "$($USB):\"
+
+Copy-Item `
+    -Path $extracted'\*' `
+    -Destination $USB':\' `
+    -Recurse -Force -Verbose
 
 Write-Output "Creation completed!"
 Read-Host "Press Enter to exit"
