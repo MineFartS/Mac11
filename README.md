@@ -3,15 +3,19 @@
 
 ---
 
+## Requirements:
+- Intel Mac
+- USB Flash Drive (at least 8GB)
+- Computer running windows 10/11
+
 ## Instructions:
-1. Download Windows 11 from the <a href="https://www.microsoft.com/en-us/software-download/windows11#:~:text=Download Windows 11 Disk Image">Microsoft website</a>
-2. [OPTIONAL] Convert the windows 11 image to <a href="https://github.com/MineFartS/tiny11">tiny11</a>
-3. Mount the downloaded ISO image using Windows Explorer.
-4. Insert a USB Drive with at least 8GB
-5. Open PowerShell as Administrator. 
-6. Start the script :
+1. Create a <a href="https://github.com/MineFartS/tiny11">tiny11</a> image.
+2. Mount the ISO image using Windows Explorer.
+3. Insert a USB Drive with at least 8GB
+4. Open PowerShell as Administrator. 
+5. Start the script :
 ```powershell
 irm https://raw.githubusercontent.com/MineFartS/mac11/refs/heads/main/run.ps1 | iex
 ``` 
-7. Follow the instructions given.
-8. Sit back and relax :)
+6. Follow the instructions given.
+7. Sit back and relax :)
