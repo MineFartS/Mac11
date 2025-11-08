@@ -1,10 +1,10 @@
 
 # Check and run the script as admin if required
-$myWindowsID=[System.Security.Principal.WindowsIdentity]::GetCurrent()
-$myWindowsPrincipal=new-object System.Security.Principal.WindowsPrincipal($myWindowsID)
-$adminRole=[System.Security.Principal.WindowsBuiltInRole]::Administrator
+$myWindowsID = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+$myWindowsPrincipal = new-object System.Security.Principal.WindowsPrincipal($myWindowsID)
+$adminRole = [System.Security.Principal.WindowsBuiltInRole]::Administrator
 if (! $myWindowsPrincipal.IsInRole($adminRole)) {
-    Write-Output "Restarting mac11 image creator as admin in a new window, you can close this one."
+    Write-Output "Restarting mac11 USB Creator as admin in a new window, you can close this one."
     $newProcess = new-object System.Diagnostics.ProcessStartInfo "PowerShell";
     $newProcess.Arguments = $myInvocation.MyCommand.Definition;
     $newProcess.Verb = "runas";
@@ -12,24 +12,38 @@ if (! $myWindowsPrincipal.IsInRole($adminRole)) {
     exit
 }
 
-
 #---------[ Execution ]---------#
 
 # Set the window title
-$Host.UI.RawUI.WindowTitle = "Mac11 Image Creator"
+$Host.UI.RawUI.WindowTitle = "Mac11 USB Creator"
 
-#
+
 Clear-Host
 
-Write-Host 'Mac11'
-Write-Host 'Create a Windows 11 Installer USB for Intel Macs'
+
 Write-Host ''
+Write-Host 'Mac11 USB Creator'
+Write-Host 'Create a Windows 11 Installer USB for Intel Macs'
+Write-Host '--------------------------------------------------'
 
-#
-$ISO = Read-Host "Image Drive Letter"
 
-#
-$USB = Read-Host "USB Drive Letter"
+Write-Host ''
+Write-Host 'Please enter the drive letter of your mounted tiny11 Image'
+$ISO = Read-Host "Drive Letter"
+
+
+Write-Host ''
+Write-Host 'Please enter the drive letter of your USB Flash Drive'
+$USB = Read-Host "Drive Letter"
+
+Write-Host ''
+Write-Host "The Contents of your flash drive will be DESTROYED!"
+$confirm = Read-Host "Are you sure you want to proceed? (Y/N)"
+if ($confirm.ToLower() -ne 'Y') {
+    exit
+}
+
+Write-Host ''
 
 #
 $USBdisk = (Get-Partition -DriveLetter $USB | Get-Disk)
@@ -51,29 +65,33 @@ $partition = $USBdisk | New-Partition `
 Write-Output "Formatting Partition ..."
 $partition | Format-Volume `
     -FileSystem exFAT `
-    -NewFileSystemLabel "Mac11"
+    -NewFileSystemLabel "Mac11" `
+    | Out-Null
 
 Write-Output "Copying Windows Files ..."
-Copy-Item `
-    -Path "$($ISO):\*" `
-    -Destination "$($USB):\" `
-    -Recurse -Force -Verbose
+#Copy-Item `
+#    -Path "$($ISO):\*" `
+#    -Destination "$($USB):\" `
+#    -Recurse -Force -Verbose
 
-Write-Output "Downloading BootCamp Files ..."
-#Invoke-WebRequest `
-#    -Uri "https://raw.githubusercontent.com/minefarts/mac11/refs/heads/main/BootCamp.zip" `
-#    -OutFile "$env:temp\BootCamp.zip"
+#=====================================================
+
+$zipFile = "$env:temp\BootCamp.zip"
+
+# If zipFile does not already exists
+if (-not (Test-Path $zipFile)) {
+    
+    Write-Output "Downloading BootCamp Files ..."
+    Invoke-WebRequest `
+        -Uri "https://media.githubusercontent.com/media/MineFartS/Mac11/refs/heads/main/BootCamp.zip" `
+        -OutFile $zipFile
+
+}
 
 Write-Output "Copying BootCamp Files ..."
 Expand-Archive `
-    -Path "BootCamp.zip" `
-    -DestinationPath "$($USB):\" `
-    -Force -Verbose
-
-# 
-#Remove-Item `
-#    -Path "$env:temp\BootCamp.zip" `
-#    -Force
+    -Path $zipFile `
+    -DestinationPath "$($USB):\"
 
 Write-Output "Creation completed!"
 Read-Host "Press Enter to exit"
